@@ -66,39 +66,41 @@ export const useOrderStore = create<OrderState>()(
           console.log('[ORDER STORE] API response success:', result.success, 'count:', result.count)
           
           if (result.success && result.data) {
-            // Transform API data to match Order type - handle both camelCase and snake_case
+            // API already returns properly formatted data
+            // Just transform to match Order type with correct field names
             const orders: Order[] = result.data.map((o: any) => ({
               id: o.id,
-              customer: o.customerName || o.customer_name,
+              customer: o.customerName, // Map to 'customer' for Orders component
               phone: o.phone,
               address: o.address,
               note: o.note,
               date: o.date,
               time: o.time,
-              paymentMethod: o.paymentMethod || o.payment_method,
+              paymentMethod: o.paymentMethod,
               status: o.status,
-              courierStatus: o.courierStatus || o.courier_status,
-              consignmentId: o.consignmentId || o.consignment_id,
-              trackingCode: o.trackingCode || o.tracking_code,
-              courierDeliveredAt: o.courierDeliveredAt || o.courier_delivered_at,
+              courierStatus: o.courierStatus,
+              consignmentId: o.consignmentId,
+              trackingCode: o.trackingCode,
+              courierDeliveredAt: o.courierDeliveredAt,
               subtotal: parseFloat(o.subtotal) || 0,
               delivery: parseFloat(o.delivery) || 0,
               discount: parseFloat(o.discount) || 0,
-              couponCodes: typeof o.couponCodes === 'string' ? JSON.parse(o.couponCodes) : (o.couponCodes || o.coupon_codes || []),
-              couponAmount: parseFloat(o.couponAmount || o.coupon_amount) || 0,
+              couponCodes: typeof o.couponCodes === 'string' ? JSON.parse(o.couponCodes) : (o.couponCodes || []),
+              couponAmount: parseFloat(o.couponAmount) || 0,
               total: parseFloat(o.total) || 0,
-              canceledBy: o.canceledBy || o.canceled_by,
-              createdAt: o.createdAt || o.created_at,
-              updatedAt: o.updatedAt || o.updated_at,
+              canceledBy: o.canceledBy,
+              createdAt: o.createdAt,
+              updatedAt: o.updatedAt,
               items: (o.items || []).map((item: any) => ({
                 name: item.name,
                 variant: item.variant,
                 qty: item.qty,
-                basePrice: parseFloat(item.basePrice || item.base_price) || 0,
-                offerText: item.offerText || item.offer_text,
-                offerDiscount: parseFloat(item.offerDiscount || item.offer_discount) || 0,
-                couponCode: item.couponCode || item.coupon_code,
-                couponDiscount: parseFloat(item.couponDiscount || item.coupon_discount) || 0,
+                basePrice: parseFloat(item.basePrice) || 0,
+                offerText: item.offerText,
+                offerDiscount: parseFloat(item.offerDiscount) || 0,
+                couponCode: item.couponCode,
+                couponDiscount: parseFloat(item.couponDiscount) || 0,
+                productId: item.productId,
               })),
             }))
             

@@ -211,7 +211,17 @@ export async function GET(request: NextRequest) {
         canceledBy: order.canceledBy,
         createdAt: order.createdAt,
         updatedAt: order.updatedAt,
-        items: itemsByOrderId[order.id] || []
+        items: (itemsByOrderId[order.id] || []).map(item => ({
+          name: item.name,
+          variant: item.variant,
+          qty: item.qty,
+          basePrice: item.basePrice,
+          offerText: item.offerText,
+          offerDiscount: item.offerDiscount || 0,
+          couponCode: item.couponCode,
+          couponDiscount: item.couponDiscount || 0,
+          productId: item.productId,
+        }))
       }))
       
       console.log('[ORDERS API] Returning orders with statuses:', ordersWithItems.map(o => ({ id: o.id, status: o.status, courierStatus: o.courierStatus })))
