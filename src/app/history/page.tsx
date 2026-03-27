@@ -9,29 +9,23 @@ import { Order } from '@/types'
 
 function HistoryContent() {
   const { navigate } = useAppRouter()
-  const { orders, customerPhone, isLoading, fetchOrdersFromServer } = useOrderStore()
+  const { orders, customerPhone, isLoading, fetchOrdersFromServer, _hydrated } = useOrderStore()
   const [showPhoneInput, setShowPhoneInput] = useState(false)
   const [phoneInput, setPhoneInput] = useState('')
   const [localLoading, setLocalLoading] = useState(true)
-  const [hydrated, setHydrated] = useState(false)
   
   // Handle navigation
   const handleNavigate = useCallback(() => {
     navigate('shop')
   }, [navigate])
 
-  // Wait for hydration
-  useEffect(() => {
-    // Small delay to ensure zustand persist has loaded
-    const timer = setTimeout(() => {
-      setHydrated(true)
-    }, 100)
-    return () => clearTimeout(timer)
-  }, [])
-
   // Check for phone and fetch orders when hydrated
   useEffect(() => {
-    if (!hydrated) return
+    // Wait for zustand persist to hydrate from localStorage
+    if (!_hydrated) {
+      console.log('[HISTORY] Waiting for hydration...')
+      return
+    }
     
     const checkAndFetch = async () => {
       // Check URL params for phone first
@@ -62,12 +56,12 @@ function HistoryContent() {
     }
     
     checkAndFetch()
-  }, [hydrated, customerPhone, fetchOrdersFromServer])
+  }, [_hydrated, customerPhone, fetchOrdersFromServer])
 
   // Auto-refresh when page becomes visible (tab switch back)
   useEffect(() => {
     const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible' && hydrated) {
+      if (document.visibilityState === 'visible' && _hydrated) {
         const urlParams = new URLSearchParams(window.location.search)
         const urlPhone = urlParams.get('phone')
         const phoneToUse = urlPhone || customerPhone
@@ -81,7 +75,7 @@ function HistoryContent() {
     
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [hydrated, customerPhone, fetchOrdersFromServer])
+  }, [_hydrated, customerPhone, fetchOrdersFromServer])
 
   // Handle phone submit
   const handlePhoneSubmit = async (e: React.FormEvent) => {
@@ -111,7 +105,7 @@ function HistoryContent() {
   }
 
   // Loading state
-  if (!hydrated || localLoading || isLoading) {
+  if (!_hydrated || localLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center" style={{ fontFamily: "'Hind Siliguri', 'Noto Sans Bengali', sans-serif" }}>
         <div className="text-center">

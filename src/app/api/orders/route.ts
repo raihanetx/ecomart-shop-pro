@@ -186,11 +186,35 @@ export async function GET(request: NextRequest) {
         return timeB - timeA
       })
       
-      // Attach items to orders
+      // Attach items to orders - transform field names to camelCase for frontend
       const ordersWithItems = customerOrders.map(order => ({
-        ...order,
+        id: order.id,
+        customerId: order.customerId,
+        customerName: order.customerName,
+        phone: order.phone,
+        address: order.address,
+        note: order.note,
+        date: order.date,
+        time: order.time,
+        paymentMethod: order.paymentMethod,
+        status: order.status,
+        courierStatus: order.courierStatus,
+        consignmentId: order.consignmentId,
+        trackingCode: order.trackingCode,
+        courierDeliveredAt: order.courierDeliveredAt,
+        subtotal: order.subtotal,
+        delivery: order.delivery,
+        discount: order.discount,
+        couponCodes: order.couponCodes,
+        couponAmount: order.couponAmount,
+        total: order.total,
+        canceledBy: order.canceledBy,
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt,
         items: itemsByOrderId[order.id] || []
       }))
+      
+      console.log('[ORDERS API] Returning orders with statuses:', ordersWithItems.map(o => ({ id: o.id, status: o.status, courierStatus: o.courierStatus })))
       
       return NextResponse.json({
         success: true,
