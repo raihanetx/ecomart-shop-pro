@@ -375,6 +375,9 @@ export default function Checkout({ setView, onConfirm, cartItems = [], deliveryC
       return
     }
     
+    // Log checkout duration being sent
+    console.log('🔍 [CHECKOUT] Confirming order with checkoutDuration:', checkoutDuration, 'seconds')
+    
     setIsSubmitting(true)
     try {
       // Pass checkout duration to parent

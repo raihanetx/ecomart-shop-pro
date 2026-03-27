@@ -96,6 +96,8 @@ export async function GET() {
         // Read actual checkout duration from database
         const checkoutSeconds = r.checkoutSeconds || 0
         
+        console.log('📊 [ABANDONED GET] Record:', r.id, 'checkoutSeconds:', r.checkoutSeconds, '-> returning:', checkoutSeconds)
+        
         return {
           id: r.id,
           visitNumber: r.visitNumber || 1,
@@ -220,6 +222,8 @@ export async function PATCH(request: NextRequest) {
   try {
     const { sessionId, completedOrderId, checkoutSeconds: providedSeconds } = await request.json()
     
+    console.log('📥 [ABANDONED PATCH] Received:', { sessionId, completedOrderId, providedSeconds })
+    
     if (!sessionId) {
       return NextResponse.json({ success: false, error: 'Session ID required' }, { status: 400 })
     }
@@ -232,6 +236,7 @@ export async function PATCH(request: NextRequest) {
       .limit(1)
     
     if (latestVisit.length === 0) {
+      console.log('❌ [ABANDONED PATCH] No visit found for sessionId:', sessionId)
       return NextResponse.json({ success: false, error: 'No visit found' }, { status: 404 })
     }
     
@@ -246,6 +251,8 @@ export async function PATCH(request: NextRequest) {
       checkoutSeconds = Math.floor(diffMs / 1000)
     }
     
+    console.log('📊 [ABANDONED PATCH] Saving checkoutSeconds:', checkoutSeconds, 'to record ID:', latestVisit[0].id)
+    
     // Mark ONLY the latest visit as completed with duration
     const updated = await db.update(abandonedCheckouts)
       .set({ 
@@ -257,7 +264,10 @@ export async function PATCH(request: NextRequest) {
       .where(eq(abandonedCheckouts.id, latestVisit[0].id))
       .returning()
     
-    console.log('✅ Marked Visit #' + latestVisit[0].visitNumber + ' as completed (duration: ' + checkoutSeconds + 's)')
+    console.log('✅ [ABANDONED PATCH] Updated record:', { 
+      id: updated[0].id, 
+      checkoutSeconds: updated[0].checkoutSeconds 
+    })
     
     return NextResponse.json({ success: true, data: updated[0] })
   } catch (error) {

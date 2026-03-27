@@ -85,9 +85,7 @@ function CheckoutContent() {
   }, [])
 
   const handleConfirmOrder = useCallback(async (customerInfo: { name: string; phone: string; address: string; note?: string }, couponCode?: string, checkoutDuration?: number) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('handleConfirmOrder called with:', { customerInfo, couponCode, cartItemsCount: cartItems.length, checkoutDuration })
-    }
+    console.log('🔍 [CHECKOUT PAGE] handleConfirmOrder called with checkoutDuration:', checkoutDuration, 'seconds')
     
     try {
       const itemsWithOfferDiscount = cartItems.map(item => {
@@ -157,8 +155,9 @@ function CheckoutContent() {
       if (result.success) {
         // Mark abandoned checkout as completed with duration
         if (sessionId) {
+          console.log('🔍 [CHECKOUT PAGE] Sending PATCH to /api/abandoned with checkoutSeconds:', checkoutDuration)
           try {
-            await fetch('/api/abandoned', {
+            const patchResponse = await fetch('/api/abandoned', {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -167,7 +166,8 @@ function CheckoutContent() {
                 checkoutSeconds: checkoutDuration || 0
               })
             })
-            console.log('✅ Marked checkout as completed, duration:', checkoutDuration, 'seconds')
+            const patchResult = await patchResponse.json()
+            console.log('🔍 [CHECKOUT PAGE] PATCH response:', patchResult)
           } catch (e) {
             console.error('Failed to mark checkout as completed:', e)
           }
