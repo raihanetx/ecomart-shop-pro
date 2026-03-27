@@ -27,15 +27,17 @@ function HistoryContent() {
       const urlPhone = urlParams.get('phone')
       
       if (urlPhone) {
-        // Phone in URL - fetch orders
+        // Phone in URL - fetch orders from server
+        console.log('Phone found in URL:', urlPhone)
         await fetchOrdersFromServer(urlPhone)
         setLocalLoading(false)
         return
       }
       
-      if (customerPhone && orders.length > 0) {
-        // Already have phone and orders - try to refresh
-        await refreshOrders()
+      if (customerPhone) {
+        // Have phone in storage - fetch fresh from server
+        console.log('Phone found in storage:', customerPhone)
+        await fetchOrdersFromServer(customerPhone)
         setLocalLoading(false)
         return
       }
@@ -61,6 +63,11 @@ function HistoryContent() {
       url.searchParams.set('phone', phoneInput)
       window.history.pushState({}, '', url.toString())
     }
+  }
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    await refreshOrders()
   }
 
   // Loading state
@@ -124,8 +131,27 @@ function HistoryContent() {
     )
   }
 
-  // Show orders
-  return <Orders orders={orders as Order[]} setView={handleNavigate} />
+  // Show orders with refresh button
+  return (
+    <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'Hind Siliguri', 'Noto Sans Bengali', sans-serif" }}>
+      {/* Header with refresh */}
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3">
+        <div className="flex items-center justify-between max-w-lg mx-auto">
+          <h1 className="text-lg font-bold text-gray-900">আমার অর্ডার</h1>
+          <button
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50"
+          >
+            <i className={`ri-refresh-line ${isLoading ? 'animate-spin' : ''}`}></i>
+            <span>{isLoading ? 'লোড হচ্ছে...' : 'রিফ্রেশ'}</span>
+          </button>
+        </div>
+      </div>
+      
+      <Orders orders={orders as Order[]} setView={handleNavigate} />
+    </div>
+  )
 }
 
 export default function HistoryPage() {

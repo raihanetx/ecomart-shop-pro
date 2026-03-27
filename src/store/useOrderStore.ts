@@ -6,7 +6,6 @@ interface OrderState {
   orders: Order[]
   customerPhone: string | null
   isLoading: boolean
-  lastFetched: number | null
   addOrder: (order: Order) => void
   clearOrders: () => void
   setCustomerPhone: (phone: string) => void
@@ -14,16 +13,12 @@ interface OrderState {
   refreshOrders: () => Promise<void>
 }
 
-// Cache duration: 30 seconds
-const CACHE_DURATION = 30000
-
 export const useOrderStore = create<OrderState>()(
   persist(
     (set, get) => ({
       orders: [],
       customerPhone: null,
       isLoading: false,
-      lastFetched: null,
 
       addOrder: (order: Order) => {
         set((state) => ({
@@ -32,7 +27,7 @@ export const useOrderStore = create<OrderState>()(
       },
 
       clearOrders: () => {
-        set({ orders: [], customerPhone: null, lastFetched: null })
+        set({ orders: [], customerPhone: null })
       },
 
       setCustomerPhone: (phone: string) => {
@@ -49,8 +44,17 @@ export const useOrderStore = create<OrderState>()(
         set({ isLoading: true })
         
         try {
-          const response = await fetch(`/api/orders?phone=${encodeURIComponent(cleanPhone)}`)
+          console.log('Fetching orders from server for phone:', cleanPhone)
+          
+          const response = await fetch(`/api/orders?phone=${encodeURIComponent(cleanPhone)}`, {
+            cache: 'no-store', // Always get fresh data
+            headers: {
+              'Cache-Control': 'no-cache'
+            }
+          })
           const result = await response.json()
+          
+          console.log('API response:', result)
           
           if (result.success && result.data) {
             // Transform API data to match Order type
@@ -86,9 +90,12 @@ export const useOrderStore = create<OrderState>()(
             set({ 
               orders, 
               customerPhone: phone,
-              lastFetched: Date.now()
             })
-            console.log('Fetched', orders.length, 'orders for phone:', cleanPhone)
+            console.log('✅ Fetched', orders.length, 'orders from server')
+            console.log('Order statuses:', orders.map(o => ({ id: o.id, status: o.status, courierStatus: o.courierStatus })))
+          } else {
+            console.log('No orders found or API error:', result)
+            set({ orders: [] })
           }
         } catch (error) {
           console.error('Error fetching orders:', error)
@@ -98,28 +105,22 @@ export const useOrderStore = create<OrderState>()(
       },
 
       refreshOrders: async () => {
-        const { customerPhone, lastFetched } = get()
+        const { customerPhone } = get()
         
-        // Check if we need to refresh (cache expired or no phone)
         if (!customerPhone) {
-          console.log('No customer phone set, skipping refresh')
+          console.log('No customer phone set, cannot refresh')
           return
         }
         
-        // Skip if recently fetched (within cache duration)
-        if (lastFetched && (Date.now() - lastFetched) < CACHE_DURATION) {
-          console.log('Cache still valid, skipping refresh')
-          return
-        }
-        
+        console.log('Refreshing orders for phone:', customerPhone)
         await get().fetchOrdersFromServer(customerPhone)
       },
     }),
     {
       name: 'ecomart-orders',
       partialize: (state) => ({ 
-        orders: state.orders, 
         customerPhone: state.customerPhone 
+        // Don't persist orders - always fetch fresh from server
       }),
     }
   )
